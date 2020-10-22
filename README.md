@@ -2,7 +2,7 @@
 ## Lab: Explore a BigQuery Public Dataset
 [source](https://googlecoursera.qwiklabs.com/focuses/11593489?parent=lti_session)
 
-[img](img/recommendations.png)
+![img](img/recommendations.png)
 
 
 ### Task 1. Query a public dataset
