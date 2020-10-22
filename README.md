@@ -2,6 +2,9 @@
 ## Lab: Explore a BigQuery Public Dataset
 [source](https://googlecoursera.qwiklabs.com/focuses/11593489?parent=lti_session)
 
+[img](img/recommendations.png)
+
+
 ### Task 1. Query a public dataset
 Load the USA Names dataset
 
@@ -176,6 +179,7 @@ mysql> exit
 
 region of your Cloud SQL instance: us-central1-b
 
+Name: , Zone and Total worker nodes in your cluster.
 
 
 echo "Authorizing Cloud Dataproc to connect with Cloud SQL"
