@@ -706,6 +706,209 @@ Targeting the top 6% of first-time increases marketing ROI by 9x vs targeting th
 *Additional information*
 `roc_auc` is just one of the performance metrics available during model evaluation. Also available are accuracy, precision, and recall. Knowing which performance metric to rely on is highly dependent on what your overall objective or goal is.
 
+***
 
+
+## Lab4: Creating a Streaming Data Pipeline for a Real-Time Dashboard with Dataflow
+{source}(https://googlecoursera.qwiklabs.com/focuses/11954104?parent=lti_session)
+
+Member: 352226779593-compute@developer.gserviceaccount.com
+project-number: 352226779593
+project name (or ID): qwiklabs-gcp-00-79a9cf382e91
+
+
+### Task 1. Create a Pub/Sub topic and BigQuery dataset
+**Option 1**: The command-line tool
+
+bq mk taxirides
+
+bq mk \
+--time_partitioning_field timestamp \
+--schema ride_id:string,point_idx:integer,latitude:float,longitude:float,\
+timestamp:timestamp,meter_reading:float,meter_increment:float,ride_status:string,\
+passenger_count:integer -t taxirides.realtime
+
+
+**Option 2**: The BigQuery Console UI
+
+ride_id:string,
+point_idx:integer,
+latitude:float,
+longitude:float,
+timestamp:timestamp,
+meter_reading:float,
+meter_increment:float,
+ride_status:string,
+passenger_count:integer
+
+
+### Task 2. Create a Cloud Storage bucket
+
+![new bucket](img/gcp-bigquery-bucket.png)
+
+
+### Task 3. Set up a Dataflow Pipeline
+
+*Input Pub/Sub topic*
+projects/pubsub-public-data/topics/taxirides-realtime
+
+*BigQuery output table*
+qwiklabs-gcp-00-79a9cf382e91:taxirides.realtime
+
+*Temporary location*
+gs://qwiklabs-gcp-00-79a9cf382e91/tmp/
+
+![new bucket](img/gcp-bigquery-dataflow.png)
+
+
+### Task 4. Analyze the taxi data using BigQuery
+
+NYC data
+https://data.cityofnewyork.us/browse?;sortBy=most_accessed&utf8=%E2%9C%93
+
+SELECT * FROM taxirides.realtime LIMIT 10
+
+![new bucket](img/gcp-bigquery-result.png)
+
+
+### Task 5. Perform aggregations on the stream for reporting
+
+WITH streaming_data AS (
+
+SELECT
+  timestamp,
+  TIMESTAMP_TRUNC(timestamp, HOUR, 'UTC') AS hour,
+  TIMESTAMP_TRUNC(timestamp, MINUTE, 'UTC') AS minute,
+  TIMESTAMP_TRUNC(timestamp, SECOND, 'UTC') AS second,
+  ride_id,
+  latitude,
+  longitude,
+  meter_reading,
+  ride_status,
+  passenger_count
+FROM
+  taxirides.realtime
+WHERE ride_status = 'dropoff'
+ORDER BY timestamp DESC
+LIMIT 100000
+
+)
+
+# calculate aggregations on stream for reporting:
+SELECT
+ ROW_NUMBER() OVER() AS dashboard_sort,
+ minute,
+ COUNT(DISTINCT ride_id) AS total_rides,
+ SUM(meter_reading) AS total_revenue,
+ SUM(passenger_count) AS total_passengers
+FROM streaming_data
+GROUP BY minute, timestamp
+
+![new bucket](img/gcp-bigquery-result2.png)
+
+### Task 6. Create a real-time dashboard
+
+https://datastudio.google.com/navigation/reporting
+
+https://datastudio.google.com/u/0/explorer/ae74b7d6-5139-4315-867b-3ed268f5245b?config=%7B%22sql%22:%22WITH%20streaming_data%20AS%20(%5Cn%5CnSELECT%5Cn%20%20timestamp,%5Cn%20%20TIMESTAMP_TRUNC(timestamp,%20HOUR,%20%27UTC%27)%20AS%20hour,%5Cn%20%20TIMESTAMP_TRUNC(timestamp,%20MINUTE,%20%27UTC%27)%20AS%20minute,%5Cn%20%20TIMESTAMP_TRUNC(timestamp,%20SECOND,%20%27UTC%27)%20AS%20second,%5Cn%20%20ride_id,%5Cn%20%20latitude,%5Cn%20%20longitude,%5Cn%20%20meter_reading,%5Cn%20%20ride_status,%5Cn%20%20passenger_count%5CnFROM%5Cn%20%20taxirides.realtime%5CnWHERE%20ride_status%20%3D%20%27dropoff%27%5CnORDER%20BY%20timestamp%20DESC%5CnLIMIT%20100000%5Cn%5Cn)%5Cn%5Cn%23%20calculate%20aggregations%20on%20stream%20for%20reporting:%5CnSELECT%5Cn%20ROW_NUMBER()%20OVER()%20AS%20dashboard_sort,%5Cn%20minute,%5Cn%20COUNT(DISTINCT%20ride_id)%20AS%20total_rides,%5Cn%20SUM(meter_reading)%20AS%20total_revenue,%5Cn%20SUM(passenger_count)%20AS%20total_passengers%5CnFROM%20streaming_data%5CnGROUP%20BY%20minute,%20timestamp%22,%22billingProjectId%22:%22qwiklabs-gcp-00-79a9cf382e91%22,%22projectId%22:%22qwiklabs-gcp-00-79a9cf382e91%22,%22tableId%22:%22anonb3a6f30d_0200_4f58_98ba_0601ca8b8ae1%22,%22datasetId%22:%22_9e7cd014eb9a3c534f510fba14a8ca39a17c9e7a%22,%22connectorType%22:%22BIG_QUERY%22,%22sqlType%22:%22STANDARD_SQL%22%7D
+Real-time-dashboard_v1
+
+
+### Task 7. Create a time series dashboard
+
+SELECT
+  *
+FROM
+  taxirides.realtime
+WHERE
+  ride_status='dropoff'
+  
+
+project: qwiklabs-gcp-00-79a9cf382e91
+  
+
+**Create a time series chart **
+
+![new bucket](img/gcp-bigquery-realtimedashboard.png)
+
+![new bucket](img/gcp-bigquery-report1.png)
+
+
+### Task 8. Stop the Dataflow job
+
+
+***
+
+
+## Lab5: Classifying Images of Clouds in the Cloud with AutoML Vision
+
+### Task 1. Set up AutoML Vision
+
+**Cloud AutoML API**
+https://console.cloud.google.com/apis/library/automl.googleapis.com?q=Cloud%20AutoML%20API&id=1db466e2-eb92-4a12-8c6b-c31030d214f9&project=qwiklabs-gcp-01-151eaa31ecf5
+
+
+**Create a Cloud Storage bucket for your training data**
+
+gsutil mb -p $DEVSHELL_PROJECT_ID \
+    -c regional    \
+    -l us-central1 \
+    gs://$DEVSHELL_PROJECT_ID-vcm/
+	
+
+*AutoML UI*
+https://console.cloud.google.com/vision/datasets?project=qwiklabs-gcp-01-151eaa31ecf5&folder=&organizationId=
+
+
+
+### Task 2. Upload training images to Cloud Storage
+
+gsutil -m cp -r gs://automl-codelab-clouds/* gs://$DEVSHELL_PROJECT_ID-vcm/
+
+gsutil ls gs://$DEVSHELL_PROJECT_ID-vcm/
+
+
+**Optional**: View the images using the Cloud Storage Console UI
+
+bucket-name: qwiklabs-gcp-01-151eaa31ecf5-vcm
+
+![new bucket](img/gcp-cloudstorage-ui.png)
+
+
+### Task 3. Create an AutoML Vision training dataset
+
+gsutil cp gs://automl-codelab-metadata/data.csv .
+head --lines=10 data.csv
+sed -i -e "s/placeholder/$DEVSHELL_PROJECT_ID-vcm/g" ./data.csv
+head --lines=10 data.csv
+gsutil cp ./data.csv gs://$DEVSHELL_PROJECT_ID-vcm/
+gsutil ls gs://$DEVSHELL_PROJECT_ID-vcm/
+
+gsutil ls gs://$DEVSHELL_PROJECT_ID-vcm/*
+
+
+gs://qwiklabs-gcp-01-151eaa31ecf5-vcm/data.csv
+OR https://storage.cloud.google.com/qwiklabs-gcp-01-151eaa31ecf5-vcm/data.csv
+
+
+### Task 4. Inspect the images
+
+![cloud](aml_all-clouds-images.png)
+
+![cloud](aml_clouds-label-stats.png)
+
+
+### Task 5. Train your model
+
+![training model](img/aml_all-clouds-training-model.png)
+
+
+### Task 6. Evaluate your model
+
+**Confusion matrix**
+![confusion matrix](img/aml_confusion-matrix.png)
+
+
+### Task 7. Generate predictions
 
 
