@@ -911,4 +911,9 @@ OR https://storage.cloud.google.com/qwiklabs-gcp-01-151eaa31ecf5-vcm/data.csv
 
 ### Task 7. Generate predictions
 
+***
+
+
+
+
 
